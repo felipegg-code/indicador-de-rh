@@ -1,6 +1,0 @@
-Coloque aqui os arquivos Excel:
-
-- BANCO_DE_HORAS_58_ANALISADO.xlsx
-- TRATAMENTO_PONTO_GERAL.xlsx
-
-O dashboard será gerado automaticamente ao fazer o upload.
