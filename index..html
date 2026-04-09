@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechSolutions — Dashboard RH</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#f4f5f7; --white:#fff; --border:#e3e6ed; --text:#1e2235; --muted:#7b83a0;
+  --orange:#f47c20; --orange-l:#fff4ec; --orange-bd:#ffd4ae;
+  --blue:#2563b8;   --blue-l:#edf3fc;   --blue-bd:#bad0f7;
+  --green:#1e9e5e;  --green-l:#eaf7f1;  --green-bd:#a8e4c8;
+  --amber:#c97b00;  --amber-l:#fef8ec;  --amber-bd:#f5d98a;
+  --red:#c0392b;    --red-l:#fdf1f0;    --red-bd:#f5bcb7;
+  --font:'Inter',sans-serif; --r:10px; --r-sm:7px; --sh:0 1px 3px rgba(0,0,0,0.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.5;}
+
+/* TOPBAR */
+.topbar{background:var(--orange);padding:16px 28px 12px;}
+.topbar-title{font-size:18px;font-weight:700;color:#fff;letter-spacing:.2px;}
+.topbar-sub{font-size:11px;color:rgba(255,255,255,.82);margin-top:2px;}
+
+/* NAV */
+.nav{background:var(--white);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-wrap:wrap;gap:8px;}
+.tabs{display:flex;}
+.tab{background:none;border:none;border-bottom:3px solid transparent;
+  padding:13px 16px;font-size:12px;font-weight:500;color:var(--muted);
+  cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;}
+.tab:hover{color:var(--orange);}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+.nav-chips{display:flex;gap:6px;padding:8px 0;}
+.chip{background:var(--bg);border:1px solid var(--border);border-radius:20px;
+  padding:4px 11px;font-size:10px;color:var(--muted);}
+
+/* WRAP */
+.wrap{max-width:1300px;margin:0 auto;padding:20px 20px 48px;}
+
+/* PANELS */
+.panel{display:none;}
+.panel.active{display:block;animation:up .22s ease both;}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--r);
+  padding:15px 18px;box-shadow:var(--sh);border-top:3px solid var(--kc,var(--border));}
+.kpi-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--kc,var(--muted));margin-bottom:7px;}
+.kpi-val{font-size:28px;font-weight:700;color:var(--kc,var(--text));line-height:1;}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:5px;}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px;box-shadow:var(--sh);}
+.card-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px;}
+.card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;
+  display:flex;align-items:center;gap:7px;}
+.card-title::before{content:'';width:3px;height:13px;background:var(--orange);border-radius:2px;flex-shrink:0;}
+.card-tag{font-size:9px;font-weight:600;padding:3px 9px;border-radius:10px;
+  background:var(--amber-l);color:var(--amber);border:1px solid var(--amber-bd);white-space:nowrap;}
+.chart-box{position:relative;width:100%;}
+
+/* SECTION DIVIDER */
+.sec-div{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;
+  margin:20px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;
+  padding:7px 10px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;background:var(--bg);}
+tbody td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:#f9fafc;}
+.mono{font-family:'Courier New',monospace;font-size:11px;}
+
+/* PILLS */
+.pill{display:inline-block;font-size:9px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.p-red   {background:var(--red-l);  color:var(--red);  border:1px solid var(--red-bd);}
+.p-amber {background:var(--amber-l);color:var(--amber);border:1px solid var(--amber-bd);}
+.p-blue  {background:var(--blue-l); color:var(--blue); border:1px solid var(--blue-bd);}
+.p-green {background:var(--green-l);color:var(--green);border:1px solid var(--green-bd);}
+.p-orange{background:var(--orange-l);color:var(--orange);border:1px solid var(--orange-bd);}
+.p-gray  {background:var(--bg);     color:var(--muted);border:1px solid var(--border);}
+
+/* PERF BAR */
+.pbar{display:flex;align-items:center;gap:6px;}
+.pbar-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.pbar-fill{height:100%;border-radius:3px;}
+.pbar-val{font-size:10px;font-weight:600;min-width:34px;text-align:right;}
+
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
+.leg-sq{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+
+/* DONUT */
+.donut-wrap{position:relative;display:flex;align-items:center;justify-content:center;}
+.donut-center{position:absolute;text-align:center;pointer-events:none;}
+.donut-num{font-size:22px;font-weight:700;}
+.donut-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+
+/* FILTER */
+.filter-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.filter-sel{background:var(--white);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:5px 11px;font-size:11px;color:var(--text);cursor:pointer;font-family:var(--font);
+  outline:none;transition:border-color .15s;}
+.filter-sel:focus,.filter-sel:hover{border-color:var(--orange);}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--border);padding-top:14px;margin-top:4px;
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.footer-txt{font-size:10px;color:var(--muted);}
+
+@media(max-width:900px){
+  .kpi-strip{grid-template-columns:repeat(2,1fr);}
+  .g2,.g3{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">TECHSOLUTIONS — DASHBOARD RH</div>
+  <div class="topbar-sub">Filial 58 &nbsp;·&nbsp; Período: 16/03/2026 a 07/04/2026 &nbsp;·&nbsp; GG / GOL / ENCARREGADOS</div>
+</div>
+
+<div class="nav">
+  <div class="tabs">
+    <button class="tab active" onclick="show('bh')">Banco de Horas</button>
+    <button class="tab" onclick="show('intra')">Intrajornada</button>
+    <button class="tab" onclick="show('inter')">Interjornada</button>
+  </div>
+  <div class="nav-chips">
+    <div class="chip">101 colaboradores (BH)</div>
+    <div class="chip">24 dias analisados</div>
+    <div class="chip">16/03 – 07/04/2026</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ════════════════ BANCO DE HORAS ════════════════ -->
+<div id="panel-bh" class="panel active">
+
+  <div class="kpi-strip">
+    <div class="kpi" style="--kc:var(--blue)">
+      <div class="kpi-lbl">Total analisado</div>
+      <div class="kpi-val">101</div>
+      <div class="kpi-sub">colaboradores na base</div>
+    </div>
+    <div class="kpi" style="--kc:var(--green)">
+      <div class="kpi-lbl">Dentro do controle</div>
+      <div class="kpi-val">71</div>
+      <div class="kpi-sub">saldo em faixa normal</div>
+    </div>
+    <div class="kpi" style="--kc:var(--amber)">
+      <div class="kpi-lbl">Atenção / Alerta</div>
+      <div class="kpi-val">29</div>
+      <div class="kpi-sub">monitorar saldo</div>
+    </div>
+    <div class="kpi" style="--kc:var(--red)">
+      <div class="kpi-lbl">Crítico (+20h)</div>
+      <div class="kpi-val">1</div>
+      <div class="kpi-sub">fazer compensação já</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Saldo de banco de horas por seção</div>
+        <div class="card-tag">TOTALGERAL</div>
+      </div>
+      <div class="chart-box" style="height:300px">
+        <canvas id="cBhSec" role="img" aria-label="Saldo de banco de horas por seção."></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Distribuição por faixa</div>
+        <div class="card-tag">101 colab.</div>
+      </div>
+      <div class="donut-wrap" style="height:180px;margin-bottom:10px;">
+        <div class="chart-box" style="height:180px;">
+          <canvas id="cBhFaixa" role="img" aria-label="Distribuição por faixa de banco de horas."></canvas>
+        </div>
+        <div class="donut-center">
+          <div class="donut-num" style="color:var(--orange)">101</div>
+          <div class="donut-lbl">total</div>
+        </div>
+      </div>
+      <div class="legend" style="justify-content:center;" id="bh-faixa-legend"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-title">Ranking completo — banco de horas por colaborador</div>
+      <div class="card-tag" id="bhColabTag">101 colaboradores</div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-lbl">Seção:</span>
+      <select class="filter-sel" id="bhSecFil" onchange="renderBhTable()">
+        <option value="">Todas</option>
+      </select>
+      <span class="filter-lbl" style="margin-left:8px;">Ação:</span>
+      <select class="filter-sel" id="bhAcaoFil" onchange="renderBhTable()">
+        <option value="">Todas</option>
+        <option>FAZER COMPENSACAO</option>
+        <option>MONITORAR SALDO</option>
+        <option>SEM ACAO</option>
+      </select>
+      <span class="filter-lbl" style="margin-left:8px;">Ordenar:</span>
+      <select class="filter-sel" id="bhSort" onchange="renderBhTable()">
+        <option value="abs">Maior saldo (abs)</option>
+        <option value="pos">Maior positivo</option>
+        <option value="neg">Maior negativo</option>
+      </select>
+    </div>
+    <div class="tbl-wrap" style="max-height:340px;overflow-y:auto;">
+      <table>
+        <thead><tr><th>#</th><th>Nome</th><th>Seção</th><th>Função</th><th>Saldo</th><th>Faixa</th><th>Ação</th></tr></thead>
+        <tbody id="tbBh"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ INTRAJORNADA ════════════════ -->
+<div id="panel-intra" class="panel">
+
+  <div class="kpi-strip">
+    <div class="kpi" style="--kc:var(--red)">
+      <div class="kpi-lbl">Total de ocorrências</div>
+      <div class="kpi-val">14</div>
+      <div class="kpi-sub">intervalo irregular</div>
+    </div>
+    <div class="kpi" style="--kc:var(--amber)">
+      <div class="kpi-lbl">Seções afetadas</div>
+      <div class="kpi-val">11</div>
+      <div class="kpi-sub">de 31 seções ativas</div>
+    </div>
+    <div class="kpi" style="--kc:var(--orange)">
+      <div class="kpi-lbl">Seção crítica</div>
+      <div class="kpi-val" style="font-size:16px;padding-top:4px;">Prev. Perdas</div>
+      <div class="kpi-sub">3 ocorrências</div>
+    </div>
+    <div class="kpi" style="--kc:var(--blue)">
+      <div class="kpi-lbl">Pico semanal</div>
+      <div class="kpi-val">7</div>
+      <div class="kpi-sub">Sem 12 — 16/03</div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Ocorrências por seção</div>
+        <div class="card-tag">15 registros</div>
+      </div>
+      <div class="chart-box" style="height:260px">
+        <canvas id="cIntraSec" role="img" aria-label="Violações de intrajornada por seção."></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Evolução semanal</div>
+        <div class="card-tag">Por semana</div>
+      </div>
+      <div class="chart-box" style="height:260px">
+        <canvas id="cIntraWeek" role="img" aria-label="Evolução semanal de intrajornada."></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-title">Detalhe de todas as ocorrências de intrajornada</div>
+      <div class="card-tag">Intervalo &lt; 60 min</div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Colaborador</th><th>Seção</th><th>Data</th><th>Htrab</th><th>Intervalo real</th><th>Déficit</th><th>Severidade</th></tr></thead>
+        <tbody id="tbIntra"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ INTERJORNADA ════════════════ -->
+<div id="panel-inter" class="panel">
+
+  <div class="kpi-strip">
+    <div class="kpi" style="--kc:var(--red)">
+      <div class="kpi-lbl">Total de ocorrências</div>
+      <div class="kpi-val">6</div>
+      <div class="kpi-sub">descanso &lt; 11h</div>
+    </div>
+    <div class="kpi" style="--kc:var(--amber)">
+      <div class="kpi-lbl">Seções afetadas</div>
+      <div class="kpi-val">5</div>
+      <div class="kpi-sub">de 31 seções ativas</div>
+    </div>
+    <div class="kpi" style="--kc:var(--orange)">
+      <div class="kpi-lbl">Seção crítica</div>
+      <div class="kpi-val" style="font-size:16px;padding-top:4px;">Serv. Gerais</div>
+      <div class="kpi-sub">2 ocorrências</div>
+    </div>
+    <div class="kpi" style="--kc:var(--blue)">
+      <div class="kpi-lbl">Pico semanal</div>
+      <div class="kpi-val">6</div>
+      <div class="kpi-sub">Sem 13 — 23/03</div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Ocorrências por seção</div>
+        <div class="card-tag">12 registros</div>
+      </div>
+      <div class="chart-box" style="height:260px">
+        <canvas id="cInterSec" role="img" aria-label="Violações de interjornada por seção."></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Evolução semanal</div>
+        <div class="card-tag">Por semana</div>
+      </div>
+      <div class="chart-box" style="height:260px">
+        <canvas id="cInterWeek" role="img" aria-label="Evolução semanal de interjornada."></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-title">Detalhe de todas as ocorrências de interjornada</div>
+      <div class="card-tag">Descanso &lt; 11h</div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Colaborador</th><th>Seção</th><th>Data</th><th>Descanso real</th><th>Déficit</th><th>Gravidade</th></tr></thead>
+        <tbody id="tbInter"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-txt">TechSolutions Gestão de Pessoas · Filial 58 · Gerado em 08/04/2026</div>
+  <div class="footer-txt">Fontes: AUDITORIA_PONTOO.XLSX + BANCO_DE_HORAS_58_ANALISADO.XLSX</div>
+</div>
+</div>
+
+<script>
+/* ── PALETA ── */
+const C={orange:'#f47c20',blue:'#2563b8',green:'#1e9e5e',amber:'#c97b00',red:'#c0392b',muted:'#9ba3bb'};
+const GRID='rgba(0,0,0,0.05)';
+const TXT='#9ba3bb';
+const FONT={family:"'Inter',sans-serif",size:11};
+const TT={backgroundColor:'#fff',titleColor:'#1e2235',bodyColor:'#7b83a0',borderColor:'#e3e6ed',borderWidth:1,padding:10};
+
+/* ── DADOS BH ── */
+const BH_SEC=[
+  {s:"Frente de Loja",      bh_h:95.6,  n:29},
+  {s:"Recebimento",         bh_h:37.4,  n:4},
+  {s:"Mercearia Seca",      bh_h:31.6,  n:6},
+  {s:"Higiene e Limpeza",   bh_h:25.6,  n:4},
+  {s:"Confeitaria",         bh_h:26.3,  n:2},
+  {s:"Mercearia Líquida",   bh_h:24.4,  n:2},
+  {s:"Refeitório Loja",     bh_h:24.1,  n:5},
+  {s:"Padaria",             bh_h:24.0,  n:2},
+  {s:"Serviços Gerais",     bh_h:23.4,  n:8},
+  {s:"Hortifruti",          bh_h:15.5,  n:4},
+  {s:"Congelados",          bh_h:15.6,  n:2},
+  {s:"Vendas Assistidas",   bh_h:12.6,  n:1},
+  {s:"Salgados",            bh_h:8.5,   n:2},
+  {s:"Manutenção Loja",     bh_h:6.8,   n:1},
+  {s:"Depósito",            bh_h:5.1,   n:3},
+  {s:"Lanchonete",          bh_h:5.4,   n:1},
+  {s:"Marketing Loja",      bh_h:2.5,   n:1},
+  {s:"Controle de Trocas",  bh_h:9.0,   n:1},
+  {s:"Rotisseria",          bh_h:-4.8,  n:2},
+  {s:"Bazar",               bh_h:-6.1,  n:3},
+  {s:"Açougue",             bh_h:-7.8,  n:6},
+  {s:"Frios/Laticínios",    bh_h:-8.0,  n:1},
+  {s:"Seg. Alimentar",      bh_h:-8.8,  n:1},
+  {s:"Prev. Perdas",        bh_h:-20.6, n:9},
+  {s:"Controle Estoque",    bh_h:-0.2,  n:1},
+].sort((a,b)=>b.bh_h-a.bh_h);
+
+const BH_FAIXAS=[
+  {f:"CRÍTICO +20h",  n:1,  c:C.red},
+  {f:"ALERTA +15h",   n:6,  c:C.orange},
+  {f:"ATENÇÃO +10h",  n:16, c:C.amber},
+  {f:"NORMAL",        n:71, c:C.green},
+  {f:"ATENÇÃO -10h",  n:4,  c:'#8b6fa0'},
+  {f:"ALERTA -15h",   n:3,  c:'#6a4fa0'},
+];
+
+const BH_COLAB=[
+  {nome:"MARIA VITORIA DE JESUS",                    secao:"CONFEITARIA",                funcao:"CONFEITEIRO",                      saldo:"023:35",  bh_h:23.58,  faixa:"CRITICO_POSITIVO_20",  acao:"FAZER COMPENSACAO"},
+  {nome:"KAYO RYAN SOUZA MENDONCA",                  secao:"MERCEARIA LÍQUIDA",          funcao:"OPERADOR DE LOJA",                 saldo:"019:48",  bh_h:19.8,   faixa:"ALERTA_POSITIVO_15",   acao:"MONITORAR SALDO"},
+  {nome:"CLEITON DE SOUZA SILVA",                    secao:"PREVENÇÃO DE PERDAS LOJA",   funcao:"FISCAL DE PREVENCAO DE PERDAS",    saldo:"-019:29", bh_h:-19.48, faixa:"ALERTA_NEGATIVO_15",   acao:"MONITORAR SALDO"},
+  {nome:"ANDRESA SANTANA DANTAS",                    secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"019:20",  bh_h:19.33,  faixa:"ALERTA_POSITIVO_15",   acao:"MONITORAR SALDO"},
+  {nome:"JAQUELINE SANTANA DOS SANTOS",              secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"-017:19", bh_h:-17.32, faixa:"ALERTA_NEGATIVO_15",   acao:"MONITORAR SALDO"},
+  {nome:"WENDSSON VICTOR DA SILVA LIMA",             secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"016:35",  bh_h:16.58,  faixa:"ALERTA_POSITIVO_15",   acao:"MONITORAR SALDO"},
+  {nome:"ADRIANO FELIX DOS SANTOS",                  secao:"MERCEARIA SECA",             funcao:"OPERADOR DE EMPILHADEIRA",         saldo:"016:19",  bh_h:16.32,  faixa:"ALERTA_POSITIVO_15",   acao:"MONITORAR SALDO"},
+  {nome:"MOISES DE JESUS FONSECA",                   secao:"PADARIA",                    funcao:"OPERADOR DE PERECÍVEIS",           saldo:"016:07",  bh_h:16.12,  faixa:"ALERTA_POSITIVO_15",   acao:"MONITORAR SALDO"},
+  {nome:"HIAGO SANTOS SOUZA",                        secao:"FRENTE DE LOJA",             funcao:"LIDER DE FRENTE DE LOJA",          saldo:"015:53",  bh_h:15.88,  faixa:"ALERTA_POSITIVO_15",   acao:"MONITORAR SALDO"},
+  {nome:"DEYSIELLE DOS SANTOS",                      secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"-015:24", bh_h:-15.4,  faixa:"ALERTA_NEGATIVO_15",   acao:"MONITORAR SALDO"},
+  {nome:"ADEMILSON DOS SANTOS",                      secao:"CONGELADOS",                 funcao:"OPERADOR DE PERECÍVEIS",           saldo:"014:51",  bh_h:14.85,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"ECHILLY GEOVANA ALMEIDA DE JESUS",          secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"014:45",  bh_h:14.75,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"BIANCA DE ANDRADE OLIVEIRA",                secao:"MERCEARIA SECA",             funcao:"OPERADOR DE LOJA",                 saldo:"014:18",  bh_h:14.3,   faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"VILMARA CARVALHO ANDRADE",                  secao:"FRENTE DE LOJA",             funcao:"LIDER DE FRENTE DE LOJA",          saldo:"014:01",  bh_h:14.02,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"ROSENILDA TRINDADE DE OLIVEIRA",            secao:"REFEITÓRIO LOJA",            funcao:"COZINHEIRO II",                    saldo:"013:44",  bh_h:13.73,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"MARCIO JOSE BISPO DOS SANTOS",              secao:"HIGIENE E LIMPEZA",          funcao:"OPERADOR DE LOJA",                 saldo:"013:31",  bh_h:13.52,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"MATHEUS COSTA LIMA",                        secao:"SERVIÇOS GERAIS LOJA",       funcao:"LIDER DE ZELADORIA",               saldo:"013:29",  bh_h:13.48,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"SERGIO DOS SANTOS",                         secao:"DEPÓSITO",                   funcao:"OPERADOR DE EMPILHADEIRA",         saldo:"013:15",  bh_h:13.25,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"WILLIAM DA SILVA RODRIGUES",                secao:"AÇOUGUE",                    funcao:"AÇOUGUEIRO",                       saldo:"-013:15", bh_h:-13.25, faixa:"ATENCAO_NEGATIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"EDILENE DE JESUS SILVA",                    secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA PART TIME",       saldo:"013:00",  bh_h:13.0,   faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"THIAGO RODRIGUES LODI",                     secao:"RECEBIMENTO DE MERCADORIAS", funcao:"AJUDANTE DE DEPOSITO",             saldo:"012:56",  bh_h:12.93,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"EMERSON EDUARDO DOS SANTOS",                secao:"VENDAS ASSISTIDAS",          funcao:"VENDEDOR",                         saldo:"012:37",  bh_h:12.62,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"YURI OLIVEIRA DOS SANTOS",                  secao:"SERVIÇOS GERAIS LOJA",       funcao:"AUXILIAR SERVICOS GERAIS",         saldo:"012:36",  bh_h:12.6,   faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"MAXWELL MESSIAS DOS SANTOS",                secao:"PREVENÇÃO DE PERDAS LOJA",   funcao:"FISCAL DE PREVENCAO DE PERDAS",    saldo:"-012:02", bh_h:-12.03, faixa:"ATENCAO_NEGATIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"CARLOS ALBERTO SANTOS FILHO",               secao:"RECEBIMENTO DE MERCADORIAS", funcao:"AJUDANTE DE DEPOSITO",             saldo:"011:46",  bh_h:11.77,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"JIMMY WESLEY DOS ANJOS",                    secao:"SERVIÇOS GERAIS LOJA",       funcao:"AUXILIAR SERVICOS GERAIS",         saldo:"-011:30", bh_h:-11.5,  faixa:"ATENCAO_NEGATIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"GABRIEL SOARES SOUZA",                      secao:"PREVENÇÃO DE PERDAS LOJA",   funcao:"FISCAL DE PREVENCAO DE PERDAS",    saldo:"010:39",  bh_h:10.65,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"SOLANGE DE JESUS SANTOS",                   secao:"SERVIÇOS GERAIS LOJA",       funcao:"AUXILIAR SERVICOS GERAIS",         saldo:"010:32",  bh_h:10.53,  faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"ROSIMEIRE SANTOS BISPO",                    secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"010:12",  bh_h:10.2,   faixa:"ATENCAO_POSITIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"CARLA OLIVEIRA SOARES",                     secao:"SERVIÇOS GERAIS LOJA",       funcao:"AUXILIAR SERVICOS GERAIS",         saldo:"-010:03", bh_h:-10.05, faixa:"ATENCAO_NEGATIVO_10",  acao:"MONITORAR SALDO"},
+  {nome:"PAULO GABRIEL SILVA",                       secao:"HIGIENE E LIMPEZA",          funcao:"OPERADOR DE LOJA",                 saldo:"09:46",   bh_h:9.77,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"KLEBER SANTANA DA SILVA",                   secao:"PREVENÇÃO DE PERDAS LOJA",   funcao:"FISCAL DE PREVENCAO DE PERDAS",    saldo:"-09:31",  bh_h:-9.52,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"MAXWELL DA SILVA COSTA",                    secao:"HORTIFRUTI",                 funcao:"OPERADOR DE PERECÍVEIS",           saldo:"09:28",   bh_h:9.47,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"LUIZ HENRIQUE CARVALHO REIS",               secao:"CONTROLE DE TROCAS",         funcao:"AUXILIAR ADMINISTRATIVO I",        saldo:"09:03",   bh_h:9.05,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"BEATRIZ APARECIDA DE JESUS SANTOS",         secao:"SEGURANÇA ALIMENTAR LOJA",   funcao:"ESTAGIÁRIO",                       saldo:"-08:48",  bh_h:-8.8,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"LUCIANA DE SANTANA CORTES",                 secao:"FRENTE DE LOJA",             funcao:"PASSADOR",                         saldo:"08:32",   bh_h:8.53,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"JOSE KELVIN DE JESUS SANTOS",               secao:"FRIOS/LATICÍNIOS",           funcao:"OPERADOR DE PERECÍVEIS",           saldo:"-08:01",  bh_h:-8.02,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"GISELA VALESSANDRA DE LIMA DANTAS",         secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA PART TIME",       saldo:"07:53",   bh_h:7.88,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ELIDA SILVA DE CARVALHO",                   secao:"PADARIA",                    funcao:"OPERADOR DE PERECÍVEIS",           saldo:"07:51",   bh_h:7.85,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"MARLON DOS SANTOS SILVA",                   secao:"RECEBIMENTO DE MERCADORIAS", funcao:"CONFERENTE MERCADORIA",            saldo:"07:42",   bh_h:7.7,    faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"RIQUELMI DA SILVA AUGUSTO",                 secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"-07:42",  bh_h:-7.7,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"DEBORA ROGERIA CONTREIRA SANTOS",           secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"07:27",   bh_h:7.45,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ANDRE OLIVEIRA DE JESUS",                   secao:"PREVENÇÃO DE PERDAS LOJA",   funcao:"FISCAL DE PREVENCAO DE PERDAS",    saldo:"07:24",   bh_h:7.4,    faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"MISAEL JOSE DO NASCIMENTO",                 secao:"PREVENÇÃO DE PERDAS LOJA",   funcao:"FISCAL DE PREVENCAO DE PERDAS",    saldo:"06:59",   bh_h:6.98,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"LUCIANO SANTANA",                           secao:"MANUTENÇÃO LOJA",            funcao:"OPERADOR DE MANUTENÇÃO",           saldo:"06:51",   bh_h:6.85,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"LUIS MIGUEL FREITAS DE JESUS",              secao:"MERCEARIA SECA",             funcao:"OPERADOR DE LOJA",                 saldo:"06:46",   bh_h:6.77,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"WILLY VAN SANTANA SILVA",                   secao:"AÇOUGUE",                    funcao:"OPERADOR DE PERECÍVEIS",           saldo:"06:17",   bh_h:6.28,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ESTER DIAS GOMES SANTOS",                   secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA PART TIME",       saldo:"06:12",   bh_h:6.2,    faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"VIVIANE SANTOS DE JESUS",                   secao:"ROTISSERIA",                 funcao:"OPERADOR DE PERECÍVEIS",           saldo:"-06:05",  bh_h:-6.08,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"WENDERSON SANTOS DE JESUS",                 secao:"SALGADOS",                   funcao:"OPERADOR DE PERECÍVEIS",           saldo:"05:58",   bh_h:5.97,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"SERGIO REZENDE DE SOUZA",                   secao:"HORTIFRUTI",                 funcao:"OPERADOR DE PERECÍVEIS",           saldo:"05:57",   bh_h:5.95,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"VIVIAN MARIA SILVA LIMA",                   secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA PART TIME",       saldo:"05:52",   bh_h:5.87,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"EDENILDE DA SILVA SANTOS",                  secao:"BAZAR",                      funcao:"OPERADOR DE LOJA",                 saldo:"-05:44",  bh_h:-5.73,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ICARO DIONIZIO SANTANA DA SILVA",           secao:"FRENTE DE LOJA",             funcao:"PASSADOR",                         saldo:"-05:44",  bh_h:-5.73,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"VICTOR OLIVEIRA MENDONCA",                  secao:"MERCEARIA SECA",             funcao:"OPERADOR DE LOJA",                 saldo:"-05:38",  bh_h:-5.63,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"GABRIEL SANTOS DE SOUZA",                   secao:"LANCHONETE",                 funcao:"OPERADOR DE PERECÍVEIS",           saldo:"05:25",   bh_h:5.42,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"CLEVERTON LIMA SANTOS",                     secao:"SERVIÇOS GERAIS LOJA",       funcao:"AUXILIAR SERVICOS GERAIS",         saldo:"05:08",   bh_h:5.13,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ROBERT RODRIGUES ALVES",                    secao:"RECEBIMENTO DE MERCADORIAS", funcao:"CONFERENTE MERCADORIA",            saldo:"05:01",   bh_h:5.02,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"CLECIO JUNIOR DA SILVA",                    secao:"DEPÓSITO",                   funcao:"AJUDANTE DE DEPOSITO",             saldo:"-05:00",  bh_h:-5.0,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ANA CARLA DE JESUS SANTOS OLIVEIRA",        secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"04:57",   bh_h:4.95,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"EDUARDO LIMA RODRIGUES",                    secao:"MERCEARIA SECA",             funcao:"OPERADOR DE LOJA",                 saldo:"-04:54",  bh_h:-4.9,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"WALFRAN DE SOUZA SANTOS JUNIOR",            secao:"MERCEARIA SECA",             funcao:"OPERADOR DE LOJA",                 saldo:"04:47",   bh_h:4.78,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"PAULO MARCIEL DOS SANTOS OLIVEIRA",         secao:"MERCEARIA LÍQUIDA",          funcao:"OPERADOR DE LOJA",                 saldo:"04:33",   bh_h:4.55,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"DIEGO OLIVEIRA DE ALMEIDA",                 secao:"FRENTE DE LOJA",             funcao:"PASSADOR",                         saldo:"-04:29",  bh_h:-4.48,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"JOAO HENRIQUE DOS SANTOS",                  secao:"AÇOUGUE",                    funcao:"OPERADOR DE PERECÍVEIS",           saldo:"04:29",   bh_h:4.48,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"EGINALDO SANTOS DE ALMEIDA",                secao:"AÇOUGUE",                    funcao:"AÇOUGUEIRO",                       saldo:"-04:25",  bh_h:-4.42,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"CLESSIANE OLIVEIRA DE JESUS",               secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"-04:12",  bh_h:-4.2,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"VANESSA BISPO DOS SANTOS",                  secao:"REFEITÓRIO LOJA",            funcao:"AUXILIAR SERVICOS GERAIS",         saldo:"04:07",   bh_h:4.12,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"TAUANE BISPO COSTA",                        secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"04:03",   bh_h:4.05,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"CARLOS ANDRE DOS SANTOS PAIXAO JUNIOR",     secao:"AÇOUGUE",                    funcao:"AÇOUGUEIRO",                       saldo:"-03:31",  bh_h:-3.52,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"LEVI YOHAI MELO DOS SANTOS",                secao:"HIGIENE E LIMPEZA",          funcao:"OPERADOR DE LOJA",                 saldo:"03:30",   bh_h:3.5,    faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"GILTON ALVES LINO",                         secao:"SERVIÇOS GERAIS LOJA",       funcao:"AUXILIAR SERVICOS GERAIS",         saldo:"03:20",   bh_h:3.33,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"RONALDO SERGIO DOS SANTOS",                 secao:"REFEITÓRIO LOJA",            funcao:"OPERADOR DE PERECÍVEIS",           saldo:"03:19",   bh_h:3.32,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"LAURINALDO CARLOS DE SOUZA",                secao:"DEPÓSITO",                   funcao:"AJUDANTE DE DEPOSITO",             saldo:"-03:11",  bh_h:-3.18,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"JULIETE MENDONCA COSTA",                    secao:"PREVENÇÃO DE PERDAS LOJA",   funcao:"FISCAL DE PREVENCAO DE PERDAS",    saldo:"-02:59",  bh_h:-2.98,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"CLECIANE MARTINS DOS SANTOS",               secao:"CONFEITARIA",                funcao:"OPERADOR DE PERECÍVEIS",           saldo:"02:45",   bh_h:2.75,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ANA CARLA DOS SANTOS LEMOS",                secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"02:40",   bh_h:2.67,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"EDSON SOUZA SILVA",                         secao:"AÇOUGUE",                    funcao:"OPERADOR DE PERECÍVEIS",           saldo:"02:38",   bh_h:2.63,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"RAFAEL GOMES SERRAO",                       secao:"SALGADOS",                   funcao:"OPERADOR DE PERECÍVEIS",           saldo:"02:31",   bh_h:2.52,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"MAGNO JOSE DOS SANTOS CRUZ",                secao:"MARKETING LOJA",             funcao:"CARTAZISTA",                       saldo:"02:30",   bh_h:2.5,    faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"JOSE ARMANDO VIEIRA DA SILVA",              secao:"HORTIFRUTI",                 funcao:"OPERADOR DE PERECÍVEIS",           saldo:"02:07",   bh_h:2.12,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"SIMONE FERREIRA DA SILVA",                  secao:"REFEITÓRIO LOJA",            funcao:"OPERADOR DE PERECÍVEIS",           saldo:"02:07",   bh_h:2.12,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"SAVIO MARTINS SANTOS",                      secao:"HORTIFRUTI",                 funcao:"OPERADOR DE PERECÍVEIS",           saldo:"-02:01",  bh_h:-2.02,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"JUSSARA BARBOSA SANTOS",                    secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"-01:51",  bh_h:-1.85,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"JANECLE OLIVEIRA SANTOS",                   secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"01:43",   bh_h:1.72,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"JOSE ALEALDO DOS SANTOS",                   secao:"PREVENÇÃO DE PERDAS LOJA",   funcao:"FISCAL DE PREVENCAO DE PERDAS",    saldo:"-01:28",  bh_h:-1.47,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"VANESSA CONCEICAO DE JESUS",                secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"01:20",   bh_h:1.33,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"LEONARDO LIMA OLIVEIRA",                    secao:"ROTISSERIA",                 funcao:"OPERADOR DE PERECÍVEIS",           saldo:"01:16",   bh_h:1.27,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ALEXSANDRO DE JESUS JUNIOR",                secao:"HIGIENE E LIMPEZA",          funcao:"OPERADOR DE LOJA",                 saldo:"-01:14",  bh_h:-1.23,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"MARCOS ANTONIO ALVES DE JESUS",             secao:"FRENTE DE LOJA",             funcao:"PASSADOR",                         saldo:"-01:12",  bh_h:-1.2,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ANTHONY GABRIEL MELO DA SILVA",             secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"-01:00",  bh_h:-1.0,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"GABRIELA SANTOS PEIXOTO",                   secao:"REFEITÓRIO LOJA",            funcao:"AUXILIAR SERVICOS GERAIS",         saldo:"00:48",   bh_h:0.8,    faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"MATEUS CHAGAS SOUZA",                       secao:"CONGELADOS",                 funcao:"OPERADOR DE PERECÍVEIS",           saldo:"00:48",   bh_h:0.8,    faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"JANDERSON PASSOS DE SOUZA",                 secao:"BAZAR",                      funcao:"OPERADOR DE LOJA",                 saldo:"-00:34",  bh_h:-0.57,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ITHAUANNE MIRELLY SANTOS DA CONCEICAO",     secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"00:16",   bh_h:0.27,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"TASSILA VICTORIA CONCEICAO A. BORGES",      secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"-00:15",  bh_h:-0.25,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"VITOR GABRIEL DOS SANTOS VILELA",           secao:"CONTROLE DE ESTOQUE LOJA",   funcao:"ESTOQUISTA",                       saldo:"-00:13",  bh_h:-0.22,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"JULIANA SILVA SANTOS",                      secao:"BAZAR",                      funcao:"OPERADOR DE LOJA",                 saldo:"00:11",   bh_h:0.18,   faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ANDELA MIRELLA SILVA SANTOS",               secao:"SERVIÇOS GERAIS LOJA",       funcao:"AUXILIAR SERVICOS GERAIS",         saldo:"-00:10",  bh_h:-0.17,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"ANTONIO MARCOS LIMA DE JESUS",              secao:"PREVENÇÃO DE PERDAS LOJA",   funcao:"FISCAL DE PREVENCAO DE PERDAS",    saldo:"-00:08",  bh_h:-0.13,  faixa:"NORMAL",               acao:"SEM ACAO"},
+  {nome:"LUANA FEITOSA SANTOS",                      secao:"FRENTE DE LOJA",             funcao:"OPERADOR DE LOJA",                 saldo:"00:02",   bh_h:0.03,   faixa:"NORMAL",               acao:"SEM ACAO"},
+];
+
+/* ── DADOS INTRA ── */
+const INTRA_SEC=[
+  {s:"Prev. Perdas",    n:3,colab:2},
+  {s:"Frente de Loja",  n:2,colab:2},
+  {s:"Açougue",         n:1,colab:1},
+  {s:"Congelados",      n:1,colab:1},
+  {s:"Hortifruti",      n:1,colab:1},
+  {s:"Marketing Loja",  n:1,colab:1},
+  {s:"Merc. Líquida",   n:1,colab:1},
+  {s:"Mercearia Seca",  n:1,colab:1},
+  {s:"Padaria",         n:1,colab:1},
+  {s:"RH Loja",         n:1,colab:1},
+  {s:"Rotisseria",      n:1,colab:1},
+];
+const INTRA_WEEK=[
+  {l:"Sem 12 (16/03)",n:7},{l:"Sem 13 (23/03)",n:1},
+  {l:"Sem 14 (30/03)",n:3},{l:"Sem 15 (06/04)",n:3},
+];
+const INTRA_TBL=[
+  {nome:"JESSICA DE MELO SOUZA",        secao:"RH LOJA",           data:"02/04",htrab:"08:48",intra:"00:42",deficit:"-00:18"},
+  {nome:"ADEMILSON DOS SANTOS",         secao:"CONGELADOS",        data:"05/04",htrab:"06:06",intra:"00:16",deficit:"-00:44"},
+  {nome:"JULIETE MENDONCA COSTA",       secao:"PREV. PERDAS",      data:"22/03",htrab:"06:01",intra:"00:20",deficit:"-00:40"},
+  {nome:"JULIETE MENDONCA COSTA",       secao:"PREV. PERDAS",      data:"07/04",htrab:"08:22",intra:"00:51",deficit:"-00:09"},
+  {nome:"KAYO RYAN SOUZA MENDONCA",     secao:"MERC. LÍQUIDA",     data:"05/04",htrab:"06:01",intra:"00:21",deficit:"-00:39"},
+  {nome:"EDUARDO LIMA RODRIGUES",       secao:"MERCEARIA SECA",    data:"07/04",htrab:"07:58",intra:"00:59",deficit:"-00:01"},
+  {nome:"EGINALDO SANTOS DE ALMEIDA",   secao:"AÇOUGUE",           data:"22/03",htrab:"06:15",intra:"00:21",deficit:"-00:39"},
+  {nome:"MAGNO JOSE DOS SANTOS CRUZ",   secao:"MARKETING LOJA",    data:"21/03",htrab:"07:10",intra:"00:59",deficit:"-00:01"},
+  {nome:"LUANA FEITOSA SANTOS",         secao:"FRENTE DE LOJA",    data:"18/03",htrab:"08:34",intra:"00:59",deficit:"-00:01"},
+  {nome:"JOSE ALEALDO DOS SANTOS",      secao:"PREV. PERDAS",      data:"22/03",htrab:"06:06",intra:"00:21",deficit:"-00:39"},
+  {nome:"VIVIANE SANTOS DE JESUS",      secao:"ROTISSERIA",        data:"08/04",htrab:"08:40",intra:"00:56",deficit:"-00:04"},
+  {nome:"MOISES DE JESUS FONSECA",      secao:"PADARIA",           data:"22/03",htrab:"06:14",intra:"00:21",deficit:"-00:39"},
+  {nome:"LUCIANA DE SANTANA CORTES",    secao:"FRENTE DE LOJA",    data:"22/03",htrab:"05:51",intra:"00:14",deficit:"-00:01"},
+  {nome:"JOSE ARMANDO VIEIRA DA SILVA", secao:"HORTIFRUTI",        data:"27/03",htrab:"07:37",intra:"00:52",deficit:"-00:08"},
+];
+
+/* ── DADOS INTER ── */
+const INTER_SEC=[
+  {s:"Serv. Gerais",    n:2,colab:2},
+  {s:"Bazar",           n:1,colab:1},
+  {s:"Frente de Loja",  n:1,colab:1},
+  {s:"Higiene/Limp.",   n:1,colab:1},
+  {s:"Hortifruti",      n:1,colab:1},
+];
+const INTER_WEEK=[
+  {l:"Sem 12 (16/03)",n:0},{l:"Sem 13 (23/03)",n:6},
+  {l:"Sem 14 (30/03)",n:0},{l:"Sem 15 (06/04)",n:0},
+];
+const INTER_TBL=[
+  {nome:"SERGIO REZENDE DE SOUZA",       secao:"HORTIFRUTI",       data:"24/03",inter:"09:40",deficit:"-01:20"},
+  {nome:"JIMMY WESLEY DOS ANJOS",        secao:"SERV. GERAIS",     data:"29/03",inter:"10:59",deficit:"-00:01"},
+  {nome:"WENDSSON VICTOR DA SILVA LIMA", secao:"FRENTE DE LOJA",   data:"29/03",inter:"10:52",deficit:"-00:08"},
+  {nome:"LEVI YOHAI MELO DOS SANTOS",    secao:"HIGIENE E LIMP.",  data:"29/03",inter:"10:52",deficit:"-00:08"},
+  {nome:"JANDERSON PASSOS DE SOUZA",     secao:"BAZAR",            data:"29/03",inter:"10:59",deficit:"-00:01"},
+  {nome:"ANDELA MIRELLA SILVA SANTOS",   secao:"SERV. GERAIS",     data:"29/03",inter:"10:51",deficit:"-00:09"},
+];
+
+/* ── HELPERS ── */
+const charts={};
+function mkChart(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),cfg);}
+
+function faixaPill(f){
+  if(f.includes('CRITICO_POS'))  return`<span class="pill p-red">CRÍTICO +20h</span>`;
+  if(f.includes('ALERTA_POS'))   return`<span class="pill p-orange">ALERTA +15h</span>`;
+  if(f.includes('ATENCAO_POS'))  return`<span class="pill p-amber">ATENÇÃO +10h</span>`;
+  if(f.includes('ALERTA_NEG'))   return`<span class="pill p-red">ALERTA -15h</span>`;
+  if(f.includes('ATENCAO_NEG'))  return`<span class="pill p-amber">ATENÇÃO -10h</span>`;
+  return`<span class="pill p-green">NORMAL</span>`;
+}
+function acaoPill(a){
+  if(a==='FAZER COMPENSACAO') return`<span class="pill p-red">COMPENSAR JÁ</span>`;
+  if(a==='MONITORAR SALDO')   return`<span class="pill p-amber">MONITORAR</span>`;
+  return`<span class="pill p-green">SEM AÇÃO</span>`;
+}
+function saldoColor(h){return h>=0?C.blue:C.red;}
+function deficitSev(d){
+  const m=parseInt(d.replace(/\D/g,''));
+  if(m>=30) return`<span class="pill p-red">GRAVE</span>`;
+  if(m>=10) return`<span class="pill p-amber">MODERADO</span>`;
+  return`<span class="pill p-blue">LEVE</span>`;
+}
+function interSev(d){
+  const parts=d.replace('-','').split('h');
+  const tot=parseInt(parts[0]||0)*60+parseInt(parts[1]||0);
+  if(tot>=600) return`<span class="pill p-red">GRAVE</span>`;
+  if(tot>=480) return`<span class="pill p-amber">MODERADO</span>`;
+  return`<span class="pill p-blue">LEVE</span>`;
+}
+
+/* ── BUILD BH ── */
+function buildBh(){
+  // chart seção
+  const sorted=BH_SEC.slice().sort((a,b)=>b.bh_h-a.bh_h);
+  mkChart('cBhSec',{type:'bar',
+    data:{labels:sorted.map(d=>d.s),datasets:[{
+      label:'Saldo BH',data:sorted.map(d=>d.bh_h),
+      backgroundColor:sorted.map(d=>d.bh_h>=0?'rgba(37,99,184,.75)':'rgba(192,57,43,.75)'),
+      borderRadius:4,borderSkipped:false,
+    }]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:t=>`${t.parsed.x>=0?'+':''}${t.parsed.x.toFixed(1)}h`}}},
+      scales:{x:{ticks:{color:TXT,font:FONT,callback:v=>`${v}h`},grid:{color:GRID},border:{display:false}},
+        y:{ticks:{color:TXT,font:FONT},grid:{display:false}}}}
+  });
+
+  // donut faixas
+  mkChart('cBhFaixa',{type:'doughnut',
+    data:{labels:BH_FAIXAS.map(d=>d.f),datasets:[{
+      data:BH_FAIXAS.map(d=>d.n),
+      backgroundColor:BH_FAIXAS.map(d=>d.c),
+      borderWidth:3,borderColor:'#fff',hoverOffset:5,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'64%',
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:t=>`${t.label}: ${t.parsed}`}}}}
+  });
+  const leg=document.getElementById('bh-faixa-legend');
+  leg.innerHTML='';
+  BH_FAIXAS.forEach(d=>{
+    leg.innerHTML+=`<div class="leg"><div class="leg-sq" style="background:${d.c}"></div>${d.f}: <b>${d.n}</b></div>`;
+  });
+
+  // populate filter
+  const secs=[...new Set(BH_COLAB.map(d=>d.secao))].sort();
+  const sel=document.getElementById('bhSecFil');
+  if(sel.options.length===1) secs.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+
+  renderBhTable();
+}
+
+function renderBhTable(){
+  const sec=document.getElementById('bhSecFil').value;
+  const acao=document.getElementById('bhAcaoFil').value;
+  const sort=document.getElementById('bhSort').value;
+  let data=[...BH_COLAB];
+  if(sec)  data=data.filter(d=>d.secao===sec);
+  if(acao) data=data.filter(d=>d.acao===acao);
+  if(sort==='abs')  data.sort((a,b)=>Math.abs(b.bh_h)-Math.abs(a.bh_h));
+  if(sort==='pos')  data.sort((a,b)=>b.bh_h-a.bh_h);
+  if(sort==='neg')  data.sort((a,b)=>a.bh_h-b.bh_h);
+  document.getElementById('bhColabTag').textContent=`${data.length} colaboradores`;
+  const tb=document.getElementById('tbBh');
+  tb.innerHTML='';
+  data.forEach((d,i)=>{
+    const c=saldoColor(d.bh_h);
+    tb.innerHTML+=`<tr>
+      <td class="mono">${i+1}</td>
+      <td style="font-weight:500;">${d.nome}</td>
+      <td style="color:var(--muted);font-size:11px;">${d.secao}</td>
+      <td style="font-size:11px;color:var(--muted);">${d.funcao}</td>
+      <td class="mono" style="font-weight:700;color:${c};">${d.saldo.startsWith('-')?d.saldo:'+'+d.saldo}</td>
+      <td>${faixaPill(d.faixa)}</td>
+      <td>${acaoPill(d.acao)}</td>
+    </tr>`;
+  });
+}
+
+/* ── BUILD INTRA ── */
+function buildIntra(){
+  mkChart('cIntraSec',{type:'bar',
+    data:{labels:INTRA_SEC.map(d=>d.s),datasets:[
+      {label:'Ocorrências',data:INTRA_SEC.map(d=>d.n),backgroundColor:'rgba(192,57,43,.75)',borderRadius:4,borderSkipped:false},
+      {label:'Colaboradores',data:INTRA_SEC.map(d=>d.colab),backgroundColor:'rgba(201,123,0,.55)',borderRadius:4,borderSkipped:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT,mode:'index'}},
+      scales:{x:{ticks:{color:TXT,font:FONT,maxRotation:30},grid:{display:false}},
+        y:{ticks:{color:TXT,font:FONT,stepSize:1},grid:{color:GRID},border:{display:false}}}}
+  });
+
+  mkChart('cIntraWeek',{type:'line',
+    data:{labels:INTRA_WEEK.map(d=>d.l),datasets:[{
+      label:'Ocorrências',data:INTRA_WEEK.map(d=>d.n),
+      borderColor:C.red,backgroundColor:'rgba(192,57,43,.07)',
+      pointRadius:6,pointBackgroundColor:C.red,borderWidth:2,tension:.3,fill:true,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT}},
+      scales:{x:{ticks:{color:TXT,font:FONT},grid:{display:false}},
+        y:{ticks:{color:TXT,font:FONT,stepSize:1},grid:{color:GRID},border:{display:false},min:0}}}
+  });
+
+  const tb=document.getElementById('tbIntra');
+  tb.innerHTML='';
+  INTRA_TBL.forEach((d,i)=>{
+    tb.innerHTML+=`<tr>
+      <td class="mono">${i+1}</td>
+      <td style="font-weight:500;">${d.nome}</td>
+      <td style="color:var(--muted);font-size:11px;">${d.secao}</td>
+      <td class="mono">${d.data}</td>
+      <td class="mono">${d.htrab}</td>
+      <td class="mono" style="color:var(--amber);font-weight:600;">${d.intra}</td>
+      <td class="mono" style="color:var(--red);font-weight:600;">${d.deficit}</td>
+      <td>${deficitSev(d.deficit)}</td>
+    </tr>`;
+  });
+}
+
+/* ── BUILD INTER ── */
+function buildInter(){
+  mkChart('cInterSec',{type:'bar',
+    data:{labels:INTER_SEC.map(d=>d.s),datasets:[
+      {label:'Ocorrências',data:INTER_SEC.map(d=>d.n),backgroundColor:'rgba(192,57,43,.75)',borderRadius:4,borderSkipped:false},
+      {label:'Colaboradores',data:INTER_SEC.map(d=>d.colab),backgroundColor:'rgba(201,123,0,.55)',borderRadius:4,borderSkipped:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT,mode:'index'}},
+      scales:{x:{ticks:{color:TXT,font:FONT,maxRotation:30},grid:{display:false}},
+        y:{ticks:{color:TXT,font:FONT,stepSize:1},grid:{color:GRID},border:{display:false}}}}
+  });
+
+  mkChart('cInterWeek',{type:'line',
+    data:{labels:INTER_WEEK.map(d=>d.l),datasets:[{
+      label:'Ocorrências',data:INTER_WEEK.map(d=>d.n),
+      borderColor:C.orange,backgroundColor:'rgba(244,124,32,.07)',
+      pointRadius:6,pointBackgroundColor:C.orange,borderWidth:2,tension:.3,fill:true,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT}},
+      scales:{x:{ticks:{color:TXT,font:FONT},grid:{display:false}},
+        y:{ticks:{color:TXT,font:FONT,stepSize:1},grid:{color:GRID},border:{display:false},min:0}}}
+  });
+
+  const tb=document.getElementById('tbInter');
+  tb.innerHTML='';
+  INTER_TBL.forEach((d,i)=>{
+    tb.innerHTML+=`<tr>
+      <td class="mono">${i+1}</td>
+      <td style="font-weight:500;">${d.nome}</td>
+      <td style="color:var(--muted);font-size:11px;">${d.secao}</td>
+      <td class="mono">${d.data}</td>
+      <td class="mono" style="color:var(--amber);font-weight:600;">${d.inter}</td>
+      <td class="mono" style="color:var(--red);font-weight:600;">${d.deficit}</td>
+      <td>${interSev(d.deficit)}</td>
+    </tr>`;
+  });
+}
+
+/* ── NAV ── */
+const PANELS=['bh','intra','inter'];
+const BUILDERS={bh:buildBh,intra:buildIntra,inter:buildInter};
+let active='bh';
+
+function show(name){
+  document.getElementById('panel-'+active).classList.remove('active');
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',PANELS[i]===name));
+  active=name;
+  document.getElementById('panel-'+name).classList.add('active');
+  BUILDERS[name]();
+}
+
+buildBh();
+</script>
+</body>
+</html>
