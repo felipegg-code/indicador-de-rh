@@ -1,1 +1,0 @@
-# indicador-de-rh
