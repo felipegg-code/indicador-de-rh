@@ -1,0 +1,40 @@
+name: Gerar e publicar dashboard RH
+
+on:
+  push:
+    paths:
+      - 'dados/**'        # dispara quando você atualiza os xlsx
+      - 'scripts/**'      # dispara quando o script muda
+  workflow_dispatch:      # botão manual no GitHub
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  gerar-dashboard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install pandas openpyxl
+
+      - name: Gerar dashboard HTML
+        run: python scripts/gerar_dashboard.py
+
+      - name: Commitar e subir o HTML gerado
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html
+          git diff --staged --quiet || git commit -m "🤖 Dashboard atualizado — $(date '+%d/%m/%Y %H:%M')"
+          git push
